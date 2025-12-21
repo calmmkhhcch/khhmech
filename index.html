@@ -1,0 +1,776 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高雄機務作業對照表 (完整版)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif; line-height: 1.5; color: #333; background-color: #f0f4f8; padding: 15px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        
+        /* 時間專區樣式 */
+        .time-section { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .time-section h2 { font-size: 20px; margin-bottom: 10px; text-align: center; color: #ecf0f1; }
+        .time-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 10px; 
+        }
+        .time-item { 
+            background: rgba(255, 255, 255, 0.1); 
+            padding: 10px; 
+            border-radius: 5px; 
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+        .time-label { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
+        .time-value { font-size: 14px; font-weight: bold; color: #3498db; }
+        
+        /* 天氣地震資訊專區樣式 */
+        .weather-section { background: linear-gradient(135deg, #27ae60, #229954); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .weather-section h2 { font-size: 20px; margin-bottom: 10px; text-align: center; color: #ecf0f1; }
+        
+        .header { background: linear-gradient(135deg, #1a5fb4, #0d3b66); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 5px; }
+        .header .subtitle { font-size: 14px; opacity: 0.9; }
+        .table-container { 
+            overflow-x: auto; 
+            padding: 0 10px;
+            position: relative; /* 添加相對定位 */
+        }
+        /* 【核心修改】表格样式调整：消除边框导致的缝隙 */
+        .comparison-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 1250px; 
+            font-size: 14px; 
+            position: relative; /* 添加相對定位 */
+        }
+        .comparison-table th { 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            /* 移除通用底部边框，避免与sticky列干扰 */
+            border-bottom: none; 
+            vertical-align: top; 
+        }
+        /* 左側固定表頭 - 关键修改：添加右边框作为遮罩层边界，并左移1像素以彻底覆盖 */
+        .comparison-table th:first-child { 
+            position: sticky; 
+            left: 0; /* 改為0，避免負值導致的渲染問題 */
+            z-index: 100;
+            background-color: #f0f7ff; 
+            width: 200px;
+            /* 使用雙重邊框確保覆蓋 */
+            border-right: 2px solid #f0f7ff !important; /* 重要標記，確保覆蓋 */
+        }
+        /* 左側固定內容格 - 关键修改：添加右边框作为遮罩层边界，并左移1像素以彻底覆盖 */
+        .comparison-table td:first-child { 
+            position: sticky; 
+            left: 0; /* 改為0，避免負值導致的渲染問題 */
+            z-index: 50;
+            background-color: white;
+            font-weight: bold; 
+            color: #1a5fb4;
+            width: 200px;
+            /* 使用雙重邊框確保覆蓋 */
+            border-right: 2px solid white !important; /* 重要標記，確保覆蓋 */
+        }
+        /* 修改：仅对tbody中的td添加底部边框，避免样式冲突 */
+        .comparison-table tbody td {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .comparison-table th, .comparison-table td { 
+            padding: 12px 8px; 
+            text-align: left; 
+            /* 移除这里设置的border-bottom，已在上方单独定义 */
+            vertical-align: top; 
+        }
+        .airline-header { color: white; text-align: center; padding: 12px 5px; border-radius: 5px; min-height: 70px; display: flex; flex-direction: column; justify-content: center; }
+        .airline-code { display: block; font-size: 12px; opacity: 0.9; margin-top: 3px; font-weight: normal; }
+        .airline-name { font-weight: bold; font-size: 15px; }
+        .category-header { background-color: #e6f2ff; font-weight: bold; color: #0d3b66; border-left: 4px solid #1a5fb4; padding-left: 15px !important; }
+        .notes-cell { background-color: #f8f9fa; line-height: 1.6; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 3px; background-color: #e9ecef; color: #495057; }
+        .badge.airbus { background-color: #d1ecf1; color: #0c5460; }
+        .badge.boeing { background-color: #f8d7da; color: #721c24; }
+        .highlight-box { background-color: #fff9e6; border-left: 3px solid #ffc107; padding: 8px; margin-top: 5px; border-radius: 0 3px 3px 0; }
+        
+        /* 【最終修訂】針對手機螢幕的特別優化 - 多重覆蓋策略 */
+        @media (max-width: 768px) { 
+            .container { border-radius: 0; } 
+            .header { padding: 15px; } 
+            .header h1 { font-size: 22px; }
+            .time-grid { grid-template-columns: 1fr; }
+            
+            /* 手機專用表格優化 - 多重覆蓋消除縫隙 */
+            .table-container {
+                padding: 0;
+                overflow-x: scroll;
+                -webkit-overflow-scrolling: touch; /* 改善移動設備滾動 */
+            }
+            
+            .comparison-table th:first-child,
+            .comparison-table td:first-child {
+                left: 0;
+                width: 180px;
+                /* 多重覆蓋策略 */
+                border-right: 2px solid #f0f7ff !important;
+                box-shadow: 
+                    2px 0 0 0 #f0f7ff, /* 第一層陰影 */
+                    3px 0 0 0 #f0f7ff; /* 第二層陰影確保覆蓋 */
+            }
+            
+            .comparison-table td:first-child {
+                border-right: 2px solid white !important;
+                box-shadow: 
+                    2px 0 0 0 white,
+                    3px 0 0 0 white;
+            }
+            
+            /* 添加一個偽元素作為額外保險 */
+            .comparison-table th:first-child::after,
+            .comparison-table td:first-child::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -3px; /* 延伸到邊界之外 */
+                width: 3px;
+                height: 100%;
+                background: inherit; /* 繼承背景色 */
+                z-index: 101;
+            }
+            
+            .comparison-table td:first-child::after {
+                background: white;
+                z-index: 51;
+            }
+            
+            /* 隱藏可能的滾動條邊緣 */
+            .table-container::-webkit-scrollbar {
+                height: 8px;
+            }
+            
+            .table-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            
+            .table-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+        }
+        
+        /* 【極端情況】針對某些特定瀏覽器的額外修復 */
+        @media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+            .comparison-table th:first-child,
+            .comparison-table td:first-child {
+                transform: translateX(0.5px); /* 微調半像素 */
+            }
+        }
+        
+        /* 自訂日期計算器的樣式 */
+        .date-calculator-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .date-calculator-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .date-calculator-row input[type="date"] {
+            flex: 1;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+        }
+        
+        .date-calculator-row input[type="number"] {
+            width: 70px;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .date-calculator-row .days-label {
+            font-size: 12px;
+            color: #ecf0f1;
+            white-space: nowrap;
+        }
+        
+        .date-calculator-result {
+            margin-top: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #2ecc71;
+            min-height: 20px;
+        }
+        
+        /* 操作選擇按鈕樣式 */
+        .operation-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .operation-btn {
+            flex: 1;
+            padding: 6px 0;
+            border: 1px solid #3498db;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .operation-btn.active {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        
+        .operation-btn:hover {
+            background-color: #3a506b;
+        }
+        
+        .operation-btn.active:hover {
+            background-color: #2980b9;
+        }
+        
+        .days-input-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 時間專區 -->
+        <div class="time-section">
+            <h2>時間專區</h2>
+            <div class="time-grid">
+                <div class="time-item">
+                    <div class="time-label">現在台灣時間</div>
+                    <div class="time-value" id="local-time">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">UTC 時間</div>
+                    <div class="time-value" id="utc-time">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">虎航 UTC</div>
+                    <div class="time-value" id="tigerair-utc">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">越南航空 UTC</div>
+                    <div class="time-value" id="vietnamairlines-utc">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">CAT B (3天後)</div>
+                    <div class="time-value" id="cat-b">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">CAT C (10天後)</div>
+                    <div class="time-value" id="cat-c">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">CAT D (120天後)</div>
+                    <div class="time-value" id="cat-d">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">180天後</div>
+                    <div class="time-value" id="180-days">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">CAT III AUTOLAND (28天後)</div>
+                    <div class="time-value" id="cat-iii-autoland">載入中...</div>
+                </div>
+                <div class="time-item">
+                    <div class="time-label">CAT III AUTOLAND倒推</div>
+                    <div class="time-value">
+                        <input type="date" id="input-date" style="width: 100%; padding: 3px; border-radius: 3px; border: 1px solid #ccc;">
+                        <div id="reverse-result" style="margin-top: 5px; font-size: 12px;">輸入日期計算</div>
+                    </div>
+                </div>
+                <!-- 新增：自訂日期加減計算器 -->
+                <div class="time-item">
+                    <div class="time-label">自訂日期加減計算</div>
+                    <div class="time-value">
+                        <div class="date-calculator-container">
+                            <div class="date-calculator-row">
+                                <input type="date" id="custom-date-input" style="width: 100%; padding: 3px; border-radius: 3px; border: 1px solid #ccc;">
+                            </div>
+                            
+                            <!-- 操作選擇按鈕 -->
+                            <div class="operation-buttons">
+                                <button id="add-btn" class="operation-btn active" data-operation="add">加 (+)</button>
+                                <button id="subtract-btn" class="operation-btn" data-operation="subtract">減 (-)</button>
+                            </div>
+                            
+                            <!-- 天數輸入和計算按鈕 -->
+                            <div class="date-calculator-row">
+                                <div class="days-input-container">
+                                    <input type="number" id="days-offset" value="0" min="0" max="365" style="width: 70px; padding: 3px; border-radius: 3px; border: 1px solid #ccc;">
+                                    <span class="days-label">天</span>
+                                </div>
+                                <button onclick="calculateCustomDate()" style="padding: 3px 8px; background-color: #3498db; color: white; border: none; border-radius: 3px; font-size: 12px; cursor: pointer; flex: 1;">計算</button>
+                            </div>
+                            
+                            <div id="custom-date-result" class="date-calculator-result">結果將顯示在這裡</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 天氣與地震資訊專區 -->
+        <div class="weather-section">
+            <h2>天氣與地震資訊</h2>
+            <div class="time-grid">
+                <!-- 小港機場天氣卡片 -->
+                <div class="time-item" style="align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('https://www.cwa.gov.tw/V8/C/L/Airport/Airport.html?PID=Q002', '_blank');">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🛫</div>
+                    <div class="time-label">小港機場天氣</div>
+                    <div class="time-value" id="current-weather">載入中...</div>
+                    <div style="font-size: 12px; margin-top: 5px; color: #a9dfbf;">點擊查看詳細機場天氣預報</div>
+                </div>
+                <!-- 地震資訊卡片 -->
+                <div class="time-item" style="align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('https://www.cwa.gov.tw/V8/C/E/index.html', '_blank');">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🌍</div>
+                    <div class="time-label">最近地震報告</div>
+                    <div class="time-value">中央氣象署</div>
+                    <div style="font-size: 12px; margin-top: 5px; color: #a9dfbf;">點擊查看即時地震資訊</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">📌 快速連結</div>
+                <a href="https://www.cwa.gov.tw/V8/C/L/Airport/Airport.html?PID=Q002" target="_blank" style="color: white; margin: 0 10px; text-decoration: underline;">小港機場詳細天氣</a> |
+                <a href="https://www.cwa.gov.tw/V8/C/E/index.html" target="_blank" style="color: white; margin: 0 10px; text-decoration: underline;">地震活動查詢</a>
+            </div>
+        </div>
+        
+        <div class="header">
+            <h1>高雄機務作業對照表</h1>
+            <div class="subtitle">各航空公司機務作業規範快速對照</div>
+        </div>
+        <div class="table-container">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <!-- 注意：此处的width="200"仅影响HTML渲染初始宽度，最终样式由CSS的.width: 200px控制 -->
+                        <th>項目</th>
+                        <!-- 虎航 - 橙黑配色 -->
+                        <th width="200" style="background-color: #1a1a1a;">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #E08D3C, #b8731a);">
+                                <div class="airline-name">虎航</div>
+                                <div class="airline-code">IT</div>
+                            </div>
+                        </th>
+                        <!-- 越南航空 - 青色 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #046C84, #034c5f);">
+                                <div class="airline-name">越南航空</div>
+                                <div class="airline-code">VN</div>
+                            </div>
+                        </th>
+                        <!-- 中国南方航空 - 深蓝 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #003284, #001f52);">
+                                <div class="airline-name">南方航空</div>
+                                <div class="airline-code">CZ / CSN</div>
+                            </div>
+                        </th>
+                        <!-- CES东方航空 - 红色 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #cc0000, #990000);">
+                                <div class="airline-name">CES東方</div>
+                                <div class="airline-code">CES/MU</div>
+                            </div>
+                        </th>
+                        <!-- 厦门航空 - 天蓝 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #009344, #007233);">
+                                <div class="airline-name">廈門航空</div>
+                                <div class="airline-code">MF</div>
+                            </div>
+                        </th>
+                        <!-- 美国联合航空 - 深蓝 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #002244, #001122);">
+                                <div class="airline-name">美聯航空</div>
+                                <div class="airline-code">UA</div>
+                            </div>
+                        </th>
+                        <!-- 德威航空 - 橙色 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #ff6600, #cc5200);">
+                                <div class="airline-name">德威航空</div>
+                                <div class="airline-code">TW</div>
+                            </div>
+                        </th>
+                        <!-- 济州航空 - 红色 -->
+                        <th width="200">
+                            <div class="airline-header" style="background: linear-gradient(135deg, #ed1c24, #bd0008);">
+                                <div class="airline-name">濟州航空</div>
+                                <div class="airline-code">7C</div>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 機型行 -->
+                    <tr>
+                        <td class="category-header">機型</td>
+                        <td><span class="badge airbus">A320(V2500/NEO)</span><span class="badge airbus">A321(V2500/NEO)</span></td>
+                        <td>-</td>
+                        <td><span class="badge boeing">738</span></td>
+                        <td><span class="badge boeing">738</span><span class="badge airbus">320</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">工單</td>
+                        <td>PF/TS 有分不同機型<br>CEO(B50001~B50019)<br>NEO(B-50021~B-50029)</td>
+                        <td>紙本TLB</td>
+                        <td>紙本工單/紙本TLB</td>
+                        <td>紙本工單/電子TLB</td>
+                        <td>紙本工單/紙本TLB</td>
+                        <td>電子式</td>
+                        <td>紙本工單/紙本TLB</td>
+                        <td>紙本工單/紙本TLB</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">工單簽名</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>無</td>
+                        <td>B1.1</td>
+                        <td>B1.1</td>
+                        <td>B1.1</td>
+                        <td>B1.1</td>
+                        <td>B1.1</td>
+                        <td>B1.1</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">360檢查責任</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                        <td>B1.1 / M1/ M0</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">油車</td>
+                        <td>中油 頻道05<br>自己叫油車</td>
+                        <td>台朔 頻道06<br>自己叫油車</td>
+                        <td>台朔 頻道06</td>
+                        <td>台朔 頻道06</td>
+                        <td>台朔 頻道06</td>
+                        <td>中油 頻道05</td>
+                        <td>台朔 頻道06</td>
+                        <td>台朔 頻道06</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">誰加油</td>
+                        <td>機務加油簽名</td>
+                        <td>機務加油簽名</td>
+                        <td>機長加油簽名</td>
+                        <td>機長加油簽名</td>
+                        <td>機長加油簽名</td>
+                        <td>機務加油簽名</td>
+                        <td>機務加油/機長簽名</td>
+                        <td>機務加油/機長簽名</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">油單</td>
+                        <td>1張給機長 / 1張機務帶回</td>
+                        <td>一張給機長,一張走到空橋旅客登機處拿上去給越南代表</td>
+                        <td>1張給機長 / 1張機務帶回</td>
+                        <td>1張給機長 / 1張給東航代表</td>
+                        <td>-</td>
+                        <td>1張給機長 1張給長榮運務<br>2張油單給長榮運務<br>華航機務拍照(完工MK用)</td>
+                        <td>1張給機長 1張機務帶回</td>
+                        <td>3張油單(1張給機長,一張給運務,一張給機務)</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">加油單位</td>
+                        <td>LBS</td>
+                        <td>KG</td>
+                        <td>KG</td>
+                        <td>KG</td>
+                        <td>KG</td>
+                        <td>LBS</td>
+                        <td>KG</td>
+                        <td>KG</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">離機帶走文件</td>
+                        <td>1.TLB 黃單<br>2.紙本油單(粉紅色)</td>
+                        <td>TLB 藍單</td>
+                        <td>TLB 藍單 (NML就可以撕掉，不用等教官簽)</td>
+                        <td>電子化不用撕本子</td>
+                        <td>一張TLB黃,一張油單收據<br>(白色的正本要留給台朔)</td>
+                        <td>無</td>
+                        <td>一張TLB(白色)一張油單<br>一張油單收據<br>(白色的正本要留給台朔)</td>
+                        <td>一張TLB(藍頁),一張油單<br>一張油單收據<br>(白色的正本要留給台朔)</td>
+                    </tr>
+                    <tr>
+                        <td class="category-header">備註</td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            加完油在油單背面寫剩餘油量拿一張給教官
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            <div class="highlight-box">1.加油先設9300KG,等代表給FINAL</div>
+                            <div class="highlight-box">2.中油給的紙本油單寫REQUST FUEL: ???? TOTAL : ???? BOWSER: ????</div>
+                            <div style="margin-top: 10px; font-size: 13px;">
+                                <strong>參考:</strong><br>
+                                <a href="https://v-tecnik.top/TOOLS" target="_blank" style="color: #046C84;">v-tecnik工具</a><br>
+                                <a href="https://calmmkhhcch.github.io/vnfuel/" target="_blank" style="color: #046C84;">越南油量計算</a>
+                            </div>
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            <div class="highlight-box">左邊:3800 其他加中間 右邊:3800</div>
+                            *可詢問前艙要不要排汙/加清(排EWASTE/加WATER)
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            華航機務拍照(完工MK用)
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            長榮接機 長榮送機 加完油跟教官拿一張油單 華航機務拍照(完工MK用)
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            <div class="highlight-box">1.拖機前1L門安全簽封邀撕下收好，拖到後保固會跟我們索取</div>
+                            <div class="highlight-box">2.拖到定位跟外面長榮RC比OK,等他們從外面開門</div>
+                            <div class="highlight-box">3.授權人員RLS後,MRD由駕駛艙印出後就可以離開(會自動印出)</div>
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            <div class="highlight-box">1.寫餘油</div>
+                            <div class="highlight-box">2.加完油教官簽字</div>
+                            <div class="highlight-box">3.左邊:3800 其他加中間 右邊:3800</div>
+                        </td>
+                        <td class="notes-cell">
+                            <div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">請先跟授權班長確認如何加油再開始加油</div>
+                            <div class="highlight-box">1.機長給油量 加油的弟兄跟授權班長說密度 (問油車)</div>
+                            <div class="highlight-box">2.左邊:3800 其他加中間 右邊:3800</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 工具連結區域 -->
+        <div style="background: #f0f7ff; padding: 20px; margin: 20px; border-radius: 10px;">
+            <h3 style="color: #1a5fb4; margin-bottom: 15px; font-size: 18px;">實用工具連結</h3>
+            <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #1a5fb4;">
+                <strong>每日人力：</strong>
+                <a href="https://calmmkhhcch.github.io/everydaymanpower/" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                    https://calmmkhhcch.github.io/everydaymanpower/
+                </a>
+            </div>
+            <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #1a5fb4;">
+                <strong>班表小助手：</strong>
+                <a href="https://calmmkhhcch.github.io/schedulecolor/" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                    https://calmmkhhcch.github.io/schedulecolor/
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 時間專區功能
+        function updateTime() {
+            const now = new Date();
+            
+            // 台灣時間 (時:分:秒)
+            const localTime = now.toLocaleTimeString('zh-TW');
+            document.getElementById('local-time').textContent = `${now.toLocaleDateString('zh-TW')} ${localTime}`;
+            
+            // UTC 時間
+            const utcTime = now.toUTCString().split(' ')[4];
+            document.getElementById('utc-time').textContent = utcTime;
+            
+            // 虎航UTC格式：日/月(英文縮寫)/年(西元年) 時:分:秒
+            const tigerairDate = now.getUTCDate().toString().padStart(2, '0');
+            const tigerairMonth = now.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+            const tigerairYear = now.getUTCFullYear();
+            const tigerairHours = now.getUTCHours().toString().padStart(2, '0');
+            const tigerairMinutes = now.getUTCMinutes().toString().padStart(2, '0');
+            const tigerairSeconds = now.getUTCSeconds().toString().padStart(2, '0');
+            document.getElementById('tigerair-utc').textContent = `${tigerairDate}/${tigerairMonth}/${tigerairYear} ${tigerairHours}:${tigerairMinutes}:${tigerairSeconds}`;
+            
+            // 越南航空UTC格式：日/月(數字)/年(西元年) 時:分:秒
+            const vietnamairlinesDate = now.getUTCDate().toString().padStart(2, '0');
+            const vietnamairlinesMonth = (now.getUTCMonth() + 1).toString().padStart(2, '0');
+            const vietnamairlinesYear = now.getUTCFullYear();
+            const vietnamairlinesHours = now.getUTCHours().toString().padStart(2, '0');
+            const vietnamairlinesMinutes = now.getUTCMinutes().toString().padStart(2, '0');
+            const vietnamairlinesSeconds = now.getUTCSeconds().toString().padStart(2, '0');
+            document.getElementById('vietnamairlines-utc').textContent = `${vietnamairlinesDate}/${vietnamairlinesMonth}/${vietnamairlinesYear} ${vietnamairlinesHours}:${vietnamairlinesMinutes}:${vietnamairlinesSeconds}`;
+            
+            // 星期幾
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekday = weekdays[now.getDay()];
+            
+            // CAT B (3天後)
+            const catBDate = new Date(now);
+            catBDate.setDate(catBDate.getDate() + 3);
+            document.getElementById('cat-b').textContent = `${catBDate.toLocaleDateString('zh-TW')} (週${weekdays[catBDate.getDay()]})`;
+            
+            // CAT C (10天後)
+            const catCDate = new Date(now);
+            catCDate.setDate(catCDate.getDate() + 10);
+            document.getElementById('cat-c').textContent = `${catCDate.toLocaleDateString('zh-TW')} (週${weekdays[catCDate.getDay()]})`;
+            
+            // CAT D (120天後)
+            const catDDate = new Date(now);
+            catDDate.setDate(catDDate.getDate() + 120);
+            document.getElementById('cat-d').textContent = `${catDDate.toLocaleDateString('zh-TW')} (週${weekdays[catDDate.getDay()]})`;
+            
+            // 180天後
+            const days180Date = new Date(now);
+            days180Date.setDate(days180Date.getDate() + 180);
+            document.getElementById('180-days').textContent = `${days180Date.toLocaleDateString('zh-TW')} (週${weekdays[days180Date.getDay()]})`;
+            
+            // CAT III AUTOLAND (28天後)
+            const catIIIDate = new Date(now);
+            catIIIDate.setDate(catIIIDate.getDate() + 28);
+            document.getElementById('cat-iii-autoland').textContent = `${catIIIDate.toLocaleDateString('zh-TW')} (週${weekdays[catIIIDate.getDay()]})`;
+        }
+        
+        // CAT III AUTOLAND倒推計算
+        function calculateReverseDate() {
+            const inputDate = document.getElementById('input-date').value;
+            if (!inputDate) return;
+            
+            const selectedDate = new Date(inputDate);
+            const reverseDate = new Date(selectedDate);
+            reverseDate.setDate(reverseDate.getDate() - 28);
+            
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            document.getElementById('reverse-result').textContent = 
+                `${reverseDate.toLocaleDateString('zh-TW')} (週${weekdays[reverseDate.getDay()]})`;
+        }
+        
+        // 自訂日期加減計算
+        function calculateCustomDate() {
+            const dateInput = document.getElementById('custom-date-input').value;
+            const daysOffset = parseInt(document.getElementById('days-offset').value) || 0;
+            
+            // 取得當前選擇的操作
+            const activeOperation = document.querySelector('.operation-btn.active').getAttribute('data-operation');
+            
+            if (!dateInput) {
+                document.getElementById('custom-date-result').textContent = "請選擇日期";
+                document.getElementById('custom-date-result').style.color = "#e74c3c";
+                return;
+            }
+            
+            const selectedDate = new Date(dateInput);
+            const resultDate = new Date(selectedDate);
+            
+            // 根據選擇的操作計算
+            if (activeOperation === 'add') {
+                resultDate.setDate(resultDate.getDate() + daysOffset);
+            } else {
+                resultDate.setDate(resultDate.getDate() - daysOffset);
+            }
+            
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const dateString = resultDate.toLocaleDateString('zh-TW');
+            const weekday = weekdays[resultDate.getDay()];
+            
+            const operationText = activeOperation === 'add' ? '加' : '減';
+            
+            document.getElementById('custom-date-result').innerHTML = 
+                `<div>${operationText} ${daysOffset} 天後：</div>
+                 <div style="font-size: 14px; margin-top: 3px;">${dateString} (週${weekday})</div>`;
+            document.getElementById('custom-date-result').style.color = "#2ecc71";
+        }
+        
+        // 天氣專區功能 - 獲取並顯示當前天氣
+        function updateWeather() {
+            // 這裡模擬一個天氣狀態，實際應用中可以替換為真實的天氣 API
+            const weatherConditions = ['☀️ 晴朗', '⛅ 多雲', '🌧️ 短暫陣雨', '☁️ 陰天'];
+            const temperatures = ['24°C / 20°C', '28°C / 18°C', '26°C / 18°C']; // 高低溫範例
+            const randomCondition = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+            const randomTemp = temperatures[Math.floor(Math.random() * temperatures.length)];
+            
+            // 更新顯示到頁面上
+            document.getElementById('current-weather').innerHTML = `<strong>${randomCondition}</strong><br>${randomTemp}`;
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 時間專區初始化
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 設定日期輸入框的預設值為今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-date').value = today;
+            calculateReverseDate();
+            
+            // 設定自訂日期計算器的預設值為今天
+            document.getElementById('custom-date-input').value = today;
+            
+            // 綁定日期輸入事件
+            document.getElementById('input-date').addEventListener('change', calculateReverseDate);
+            
+            // 綁定操作選擇按鈕事件
+            document.querySelectorAll('.operation-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按鈕的active類別
+                    document.querySelectorAll('.operation-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // 為當前點擊的按鈕添加active類別
+                    this.classList.add('active');
+                });
+            });
+            
+            // 綁定自訂日期計算器的輸入事件（按Enter鍵也可計算）
+            document.getElementById('days-offset').addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    calculateCustomDate();
+                }
+            });
+            
+            document.getElementById('custom-date-input').addEventListener('change', function() {
+                // 可選擇自動計算或留待按鈕觸發
+                // calculateCustomDate();
+            });
+            
+            // 天氣專區初始化
+            updateWeather();
+            
+            // 每10分鐘更新一次天氣（可選）
+            setInterval(updateWeather, 600000);
+        });
+    </script>
+</body>
+</html>
