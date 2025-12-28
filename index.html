@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -255,6 +255,12 @@
             align-items: center;
             gap: 5px;
         }
+        
+        /* KG 特殊樣式 - 改為紅色 */
+        .kg-bold {
+            color: #ff0000 !important; /* 改為紅色 */
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body>
@@ -356,11 +362,6 @@
                     <div style="font-size: 12px; margin-top: 5px; color: #a9dfbf;">點擊查看即時地震資訊</div>
                 </div>
             </div>
-            <div style="margin-top: 15px; text-align: center;">
-                <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">📌 快速連結</div>
-                <a href="https://www.cwa.gov.tw/V8/C/L/Airport/Airport.html?PID=Q002" target="_blank" style="color: white; margin: 0 10px; text-decoration: underline;">小港機場詳細天氣</a> |
-                <a href="https://www.cwa.gov.tw/V8/C/E/index.html" target="_blank" style="color: white; margin: 0 10px; text-decoration: underline;">地震活動查詢</a>
-            </div>
         </div>
         
         <div class="header">
@@ -439,10 +440,10 @@
                         <td>-</td>
                         <td><span class="badge boeing">738</span></td>
                         <td><span class="badge boeing">738</span><span class="badge airbus">320</span></td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
+                        <td><span class="badge boeing">738</span></td>
+                        <td><span class="badge boeing">738</span></td>
+                        <td><span class="badge boeing">738</span></td>
+                        <td><span class="badge boeing">738</span></td>
                     </tr>
                     <tr>
                         <td class="category-header">工單</td>
@@ -513,13 +514,13 @@
                     <tr>
                         <td class="category-header">加油單位</td>
                         <td>LBS</td>
-                        <td>KG</td>
-                        <td>KG</td>
-                        <td>KG</td>
-                        <td>KG</td>
+                        <td><span class="kg-bold">KG</span></td>
+                        <td><span class="kg-bold">KG</span></td>
+                        <td><span class="kg-bold">KG</span></td>
+                        <td><span class="kg-bold">KG</span></td>
                         <td>LBS</td>
-                        <td>KG</td>
-                        <td>KG</td>
+                        <td><span class="kg-bold">KG</span></td>
+                        <td><span class="kg-bold">KG</span></td>
                     </tr>
                     <tr>
                         <td class="category-header">離機帶走文件</td>
@@ -529,8 +530,8 @@
                         <td>電子化不用撕本子</td>
                         <td>一張TLB黃,一張油單收據<br>(白色的正本要留給台朔)</td>
                         <td>無</td>
-                        <td>一張TLB(白色)一張油單<br>一張油單收據<br>(白色的正本要留給台朔)</td>
-                        <td>一張TLB(藍頁),一張油單<br>一張油單收據<br>(白色的正本要留給台朔)</td>
+                        <td>一張TLB(白色),一張油單收據<br>(白色的正本要留給台朔)</td>
+                        <td>一張TLB(藍頁),一張油單收據<br>(白色的正本要留給台朔)</td>
                     </tr>
                     <tr>
                         <td class="category-header">備註</td>
@@ -597,6 +598,47 @@
                     https://calmmkhhcch.github.io/schedulecolor/
                 </a>
             </div>
+            
+            <!-- 新增：華航專區 -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #1a5fb4;">
+                <h3 style="color: #cc0000; margin-bottom: 15px; font-size: 18px;">華航專區</h3>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>EIP 華航首頁：</strong>
+                    <a href="https://eip.china-airlines.com/lportal/web/home/" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://eip.china-airlines.com/lportal/web/home/
+                    </a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>加班單申請：</strong>
+                    <a href="https://tpeehr05.china-airlines.com/overtime/OTSheetIndex.aspx" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://tpeehr05.china-airlines.com/overtime/OTSheetIndex.aspx
+                    </a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>EAM 差勤：</strong>
+                    <a href="https://eam.china-airlines.com/" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://eam.china-airlines.com/
+                    </a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>ROS：</strong>
+                    <a href="https://rosc.china-airlines.com/Fr_login.aspx" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://rosc.china-airlines.com/Fr_login.aspx
+                    </a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>TEAM +：</strong>
+                    <a href="https://eim.china-airlines.com/EIM/User/WallMain.aspx" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://eim.china-airlines.com/EIM/User/WallMain.aspx
+                    </a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px 15px; background: white; border-radius: 5px; border-left: 4px solid #cc0000;">
+                    <strong>員工機票：</strong>
+                    <a href="https://calcfec.china-airlines.com/StaffTicketWeb/et_main.aspx" target="_blank" style="color: #1a5fb4; word-break: break-all;">
+                        https://calcfec.china-airlines.com/StaffTicketWeb/et_main.aspx
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -615,7 +657,11 @@
             
             // 虎航UTC格式：日/月(英文縮寫)/年(西元年) 時:分:秒
             const tigerairDate = now.getUTCDate().toString().padStart(2, '0');
-            const tigerairMonth = now.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+            
+            // 使用固定的月份縮寫對照表，確保始終為大寫
+            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            const tigerairMonth = monthNames[now.getUTCMonth()]; // 直接從對照表取大寫月份
+            
             const tigerairYear = now.getUTCFullYear();
             const tigerairHours = now.getUTCHours().toString().padStart(2, '0');
             const tigerairMinutes = now.getUTCMinutes().toString().padStart(2, '0');
